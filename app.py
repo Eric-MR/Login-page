@@ -16,12 +16,18 @@ class LoginUser:
         self.input = input
         self.password = password
 
+def DBdata(Username,Email):
+    with mydb.cursor() as cursor:
+        if Email == None:
+            cursor.execute("SELECT ID,Username,Email,Paswort FROM Logins WHERE Email = %s", (Email,))
+        else:
+            cursor.execute("SELECT ID,Username,Email,Paswort FROM Logins WHERE Username = %s", (Username,))
+        return cursor.fetchone()
+
 @app.route('/login' , methods=['POST']) 
 def login(): 
     loginUser = LoginUser(request.json.get('input'), request.json.get('password'))
-    cursor = mydb.cursor()
-    cursor.execute("SELECT ID,Username,Email,Paswort FROM Logins WHERE Username = %s OR Email = %s", (loginUser.input, loginUser.input))
-    result = cursor.fetchone()
+    result = DBdata(loginUser.input,loginUser.input)
     if result:
         user = User(result[0], result[1], result[2], result[3])
         if user.password == loginUser.password:
@@ -30,7 +36,25 @@ def login():
             return 'WRONG Username or Password'
     else:
         return 'WRONG Username or Password'
-    
+@app.route('/register' , methods=['POST'])
+def register(): 
+    registerUser = User(None, request.json.get('username'), request.json.get('email'), request.json.get('password'))
+    with mydb.cursor() as cursor:
+        cursor.execute("SELECT EXISTS(SELECT 1 FROM Logins WHERE Username = %s)", (registerUser.username,))
+        username_exists = cursor.fetchone()[0]
+        cursor.execute("SELECT EXISTS(SELECT 1 FROM Logins WHERE Email = %s)", (registerUser.email,))
+        email_exists = cursor.fetchone()[0]
+        if username_exists:
+            return 'Username already exists'
+        if email_exists:
+            return 'Email already exists'
+        else:
+            sql = "INSERT INTO Logins (Username, Email, Paswort) VALUES (%s, %s, %s)"
+            val = (registerUser.username, registerUser.email, registerUser.password)
+            cursor.execute(sql, val)
+            mydb.commit()
+            return 'Registration successful'
+
 if __name__=='__main__': 
    app.run(debug=True) 
 
