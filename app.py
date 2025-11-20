@@ -1,5 +1,6 @@
 from flask import Flask, request
 import mysql.connector 
+from werkzeug.security import generate_password_hash, check_password_hash
 
 mydb = mysql.connector.connect(host="localhost",user="root",password="bMEM'16@22",database="Logininfo")  
 app = Flask(__name__)  
@@ -19,9 +20,9 @@ class LoginUser:
 def DBdata(Username,Email):
     with mydb.cursor() as cursor:
         if Email == None:
-            cursor.execute("SELECT ID,Username,Email,Paswort FROM Logins WHERE Email = %s", (Email,))
+            cursor.execute("SELECT ID,Username,Email,Password FROM Logins WHERE Email = %s", (Email,))
         else:
-            cursor.execute("SELECT ID,Username,Email,Paswort FROM Logins WHERE Username = %s", (Username,))
+            cursor.execute("SELECT ID,Username,Email,Password FROM Logins WHERE Username = %s", (Username,))
         return cursor.fetchone()
 
 @app.route('/login' , methods=['POST']) 
@@ -30,7 +31,7 @@ def login():
     result = DBdata(loginUser.input,loginUser.input)
     if result:
         user = User(result[0], result[1], result[2], result[3])
-        if user.password == loginUser.password:
+        if check_password_hash(user.password,loginUser.password):
             return 'Hallo' + user.username
         else:
             return 'WRONG Username or Password'
@@ -49,8 +50,9 @@ def register():
         if email_exists:
             return 'Email already exists'
         else:
-            sql = "INSERT INTO Logins (Username, Email, Paswort) VALUES (%s, %s, %s)"
-            val = (registerUser.username, registerUser.email, registerUser.password)
+            hashed_password = generate_password_hash(registerUser.password , 'pbkdf2:sha256')
+            sql = "INSERT INTO Logins (Username, Email, Password) VALUES (%s, %s, %s)"
+            val = (registerUser.username, registerUser.email, hashed_password)
             cursor.execute(sql, val)
             mydb.commit()
             return 'Registration successful'
