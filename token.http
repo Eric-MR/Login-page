@@ -1,0 +1,6 @@
+POST http://localhost:5000/
+Content-Type: application/json
+
+{
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVSUQiOiJmZDdjNTllZC0zMTE5LTQxMjctOGEzZS0wZGU1ZGViYjRiOWEiLCJleHAiOjE3NzAyODAwNjl9.uIR51B0Vll84MfxTXaxY2Jrh7FcFFrII9eKgCRWC0qc"
+}
